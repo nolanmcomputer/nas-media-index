@@ -1,6 +1,6 @@
 # NAS Media Indexing & Search Service
 
-A PostgreSQL-backed media catalog that indexes multi-terabyte NAS storage and exposes searchable REST endpoints over a local network.
+A PostgreSQL-backed media catalog that indexes NAS storage and exposes searchable REST endpoints over a local network.
 
 ## Features
 - Incremental filesystem scanning with idempotent upserts
