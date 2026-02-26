@@ -7,6 +7,12 @@ from typing import Optional
 import psycopg
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query, HTTPException
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
+
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "web" / "templates"))
 
 load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
 
@@ -74,6 +80,9 @@ def search_files(
         for r in rows
     ]
 
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request):
+	return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/stats")
 def stats():

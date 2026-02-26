@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Movie Search</title>
+  <style>
+    body { font-family: sans-serif; margin 24px; }
+    input { width: 420px; padding: 8px; }
+    button { padding: 8px 12px; }
+    .row { margin: 10px 0; }
+    .path { font-family: monospace; }
+  <style/>
+<head/>
+<body>
+  <h1>Movie Search</h1>
+
+  <div class="row">
+    <input id="q" placeholder="Search (e.g. 'Matrix', '1999')" />
+    <button onclick="search()">Search</button>
+  </div>
+
+  <div id="results"></div>
+
+  <script>
+    async function search() {
+      const q = document.getElementById("q").value.trim();
+      const res = await fetch(`/files?q=${encodeURIComponent(q)}&limit=50`);
+      const data = await res.json();
+
+      const el = document.getElementById("results");
+      el.innerHTML = "";
+
+      for (const item of data) {
+        const div = document.createElement("div");
+        div.className = "row";
+
+        // TODO: find what /files endpoint returns
+        div.innerHTML = `
+          <div class="path">${item.abs_path}</div>
+          <div>
+            <a href="${item.http_url || '#'}" target="_blank">Open (HTTP)</a>
+            &nbsp;|&nbsp;
+            <a href="${item.vlc_url || '#'}">Open in VLC</a>
+          </div>
+        `;
+        el.appendChild(div);
+      }
+    }
+  </script>
+</body>
+</html>
+	
