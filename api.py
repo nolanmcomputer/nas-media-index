@@ -18,8 +18,8 @@ app = FastAPI(title="NAS Catalog API", version="0.1.0")
 
 
 def get_conn():
-    # Simple connection-per-request. Fine for home use.
-    # Later you can add pooling (psycopg_pool) for scalability.
+    # Simple connection-per-request
+    # TODO add pooling (psycopg_pool) for scalability
     return psycopg.connect(DATABASE_URL)
 
 
@@ -98,7 +98,7 @@ def stats():
 
 @app.get("/duplicates")
 def duplicates(limit: int = Query(default=100, ge=1, le=500)):
-    # Only works once you populate sha256, but endpoint is fine to have now.
+    # TODO populate sha256
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
