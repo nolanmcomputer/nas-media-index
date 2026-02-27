@@ -2,51 +2,128 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Movie Search</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NAS Movie Search</title>
   <style>
-    body { font-family: sans-serif; margin 24px; }
-    input { width: 420px; padding: 8px; }
-    button { padding: 8px 12px; }
+    body { font-family: sans-serif; margin: 24px; line-height: 1.4; }
     .row { margin: 10px 0; }
-    .path { font-family: monospace; }
-  <style/>
-<head/>
+    input { width: min(640px, 90vw); padding: 10px; font-size: 16px; }
+    button { padding: 10px 14px; font-size: 16px; margin-left: 6px; }
+    .path { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .meta { color: #555; font-size: 13px; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+    .actions a { margin-right: 10px; }
+    .muted { color: #777; }
+  </style>
+</head>
 <body>
-  <h1>Movie Search</h1>
+  <h1>NAS Movie Search</h1>
 
   <div class="row">
-    <input id="q" placeholder="Search (e.g. 'Matrix', '1999')" />
-    <button onclick="search()">Search</button>
+    <input id="q" placeholder="Search" autocomplete="off" />
+    <button id="searchBtn">Search</button>
   </div>
 
+  <div class="row muted" id="status"></div>
   <div id="results"></div>
 
   <script>
+    const qEl = document.getElementById("q");
+    const statusEl = document.getElementById("status");
+    const resultsEl = document.getElementById("results");
+    const btn = document.getElementById("searchBtn");
+	
+
+    // Don't display parent folders	
+    function displayPath(absPath) {
+  	const marker = "/root/";
+  	const idx = absPath.indexOf(marker);
+  	if (idx === -1) return absPath; // fallback
+
+ 	return absPath.slice(idx + marker.length);
+    }
+
+    function fmtBytes(n) {
+      if (n == null) return "";
+      const units = ["B","KB","MB","GB","TB"];
+      let i = 0, x = Number(n);
+      while (x >= 1024 && i < units.length - 1) { x /= 1024; i++; }
+      return `${x.toFixed(i === 0 ? 0 : 2)} ${units[i]}`;
+    }
+
     async function search() {
-      const q = document.getElementById("q").value.trim();
-      const res = await fetch(`/files?q=${encodeURIComponent(q)}&limit=50`);
-      const data = await res.json();
+      const q = qEl.value.trim();
+      statusEl.textContent = "Searching…";
+      resultsEl.innerHTML = "";
 
-      const el = document.getElementById("results");
-      el.innerHTML = "";
+      const url = new URL("/files", window.location.origin);
+      if (q) url.searchParams.set("q", q);
+      url.searchParams.set("limit", "500");
 
-      for (const item of data) {
-        const div = document.createElement("div");
-        div.className = "row";
+      try {
+        const res = await fetch(url.toString());
+        if (!res.ok) {
+          const text = await res.text();
+          statusEl.textContent = `Error: ${res.status} ${res.statusText}`;
+          resultsEl.innerHTML = `<pre>${text}</pre>`;
+          return;
+        }
 
-        // TODO: find what /files endpoint returns
-        div.innerHTML = `
-          <div class="path">${item.abs_path}</div>
-          <div>
-            <a href="${item.http_url || '#'}" target="_blank">Open (HTTP)</a>
-            &nbsp;|&nbsp;
-            <a href="${item.vlc_url || '#'}">Open in VLC</a>
-          </div>
-        `;
-        el.appendChild(div);
+        const data = await res.json();
+        statusEl.textContent = `${data.length} result(s)`;
+
+        if (data.length === 0) {
+          resultsEl.innerHTML = `<div class="muted">No matches.</div>`;
+          return;
+        }
+
+        for (const item of data) {
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const mtime = item.mtime ? new Date(item.mtime).toLocaleString() : "";
+          const size = fmtBytes(item.size_bytes);
+
+          const httpUrl = item.http_url || "";
+          const vlcUrl = item.vlc_url || "";
+
+          card.innerHTML = `
+            <div class="path">${displayPath(item.abs_path)}</div>
+            <div class="meta">id=${item.id} · ${size} · ${mtime}</div>
+            <div class="actions" style="margin-top:8px;">
+              ${httpUrl ? `<a href="${httpUrl}" target="_blank" rel="noopener">Open stream</a>` : ""}
+              ${vlcUrl ? `<a href="${vlcUrl}">Open in VLC</a>` : ""}
+              ${vlcUrl ? `<button data-vlc="${vlcUrl}" style="padding:6px 10px;font-size:13px;">Copy VLC link</button>` : ""}
+            </div>
+          `;
+
+          // Copy button handler
+          const copyBtn = card.querySelector("button[data-vlc]");
+          if (copyBtn) {
+            copyBtn.addEventListener("click", async (e) => {
+              const link = e.target.getAttribute("data-vlc");
+              try {
+                await navigator.clipboard.writeText(link);
+                statusEl.textContent = "Copied VLC link to clipboard.";
+              } catch {
+                // fallback
+                prompt("Copy this VLC link:", link);
+              }
+            });
+          }
+
+          resultsEl.appendChild(card);
+        }
+      } catch (err) {
+        statusEl.textContent = "Network error. Is the API running?";
+        resultsEl.innerHTML = `<pre>${String(err)}</pre>`;
       }
     }
+
+    btn.addEventListener("click", search);
+    qEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") search();
+    });
   </script>
 </body>
 </html>
-	
