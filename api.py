@@ -13,7 +13,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi import Request
 
 BASE_DIR = Path(__file__).resolve().parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "web" / "templates"))
+templates = Jinja2Templates(directory="web")
 
 load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
 
@@ -228,7 +228,7 @@ def media(file_id: int, range: str | None = Header(default=None)):
 # Homepage
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-	return templates.TemplateResponse("index.html", {"request": request})
+	return templates.TemplateResponse(request=request, name="index.html", context={})
 
 @app.get("/stats")
 def stats():
