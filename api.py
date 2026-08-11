@@ -135,7 +135,7 @@ def search_files(
         SELECT id, abs_path, size_bytes, mtime, sha256
         FROM files
         {where_sql}
-        ORDER BY mtime DESC
+        ORDER BY lower(abs_path)
         LIMIT %s OFFSET %s
     """
     params.extend([limit, offset])
