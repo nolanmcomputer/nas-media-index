@@ -130,6 +130,9 @@ def search_files(
     where.append("abs_path NOT ILIKE %s")
     params.append("%.torrent")
 
+    where.append("abs_path NOT ILIKE %s")
+    params.append("%.nfo")	
+    
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
     sql = f"""
         SELECT id, abs_path, size_bytes, mtime, sha256
