@@ -42,12 +42,12 @@ def iter_files(root: Path):
 def main() -> int:
     load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
 
-    db_url = os.environ.get("DATABASE_URL")
+    db_url = os.environ.get("SCAN_DATABASE_URL")
     scan_root = os.environ.get("SCAN_ROOT")
     root_name = os.environ.get("ROOT_NAME", "Root")
 
     if not db_url or not scan_root:
-        print("Missing DATABASE_URL or SCAN_ROOT in .env", file=sys.stderr)
+        print("Missing SCAN_DATABASE_URL or SCAN_ROOT in .env", file=sys.stderr)
         return 2
 
     root = Path(scan_root)
