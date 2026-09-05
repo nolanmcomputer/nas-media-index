@@ -127,8 +127,19 @@ def main() -> int:
                         conn.commit()
                         progress.update(task, completed=files_seen)
 
-                conn.commit()
-                progress.update(task, completed=files_seen)
+		# Remove database entries not seen during this completed scan.
+		with conn.cursor() as cur:
+			cur.execute(
+			        """
+        			DELETE FROM files
+        			WHERE root = %s
+          			AND last_seen_run_id IS DISTINCT FROM %s
+        			""",
+        		(root_name, run_id),
+    			)
+    			files_removed = cur.rowcount
+
+			conn.commit()
 
         # Finish scan run row
         elapsed = time.time() - start
@@ -151,6 +162,7 @@ def main() -> int:
         print(f"Scan path: {root}")
         print(f"Files seen: {files_seen}")
         print(f"Files new/changed: {files_changed}")
+	print(f"Files removed: {files_removed}")
         print(f"Elapsed: {elapsed:.1f}s")
         return 0
 
