@@ -101,6 +101,8 @@ Fields include:
 - `files_seen`
 - `files_changed`
 
+See `docs/schema.md` for additional schema information.
+
 ## Scanner Behaviour
 
 The scanner treats the NAS filesystem as the authoritative source.
